@@ -194,8 +194,8 @@ export default {
     tool_unlink_use: '断开与参考元素的链接（使其唯一）',
     ellipse_circle_tool: '椭圆/圆形工具',
     square_rect_tool: '方形/矩形工具',
-    Remember_this_choice: '还记得这个选择吗？',
-    Remember_this_choice_title:'如果您选择退出存储并记住此选择，URL 将会改变以避免再次询问。'
+    remember_this_choice: '记住这个选择吗？',
+    remember_this_choice_title:'如果您选择退出存储并记住此选择，URL 将会改变以避免再次询问。'
   },
   layers: {
     layer: '图层',

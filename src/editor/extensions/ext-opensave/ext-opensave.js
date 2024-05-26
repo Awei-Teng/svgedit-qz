@@ -22,7 +22,8 @@ import {
   parseSVG,
   serializeSVG,
   addDomId,
-  compareAndFillSvgDom
+  compareAndFillSvgDom,
+  customInitLayer
 } from './utils.js'
 
 const name = 'opensave'
@@ -137,6 +138,7 @@ export default {
       if (ok === 'Cancel') {
         return
       }
+      window.metadataArray = null
       svgEditor.leftPanel.clickSelect()
       svgEditor.svgCanvas.clear()
       svgEditor.svgCanvas.setResolution(x, y)
@@ -167,7 +169,8 @@ export default {
         const svgContent = await blob.text()
 
         //替换script为metadata
-        const scriptToMeta1 = svgContent.replaceAll('<script', `<metadata class="qz-script"`)
+        const scriptToMeta0 = svgContent.replaceAll(`class="qz-script"`, ``)
+        const scriptToMeta1 = scriptToMeta0.replaceAll('<script', `<metadata class="qz-script"`)
         const scriptToMeta2 = scriptToMeta1.replaceAll('</script>', `</metadata>`)
 
         //提取metadata数据
@@ -180,6 +183,7 @@ export default {
         addDomId(initSvgDom);
 
         const loadSvgString = serializeSVG(initSvgDom)
+
         await svgEditor.loadSvgString(loadSvgString)
         svgEditor.updateCanvas()
         handle = blob.handle
@@ -190,6 +194,11 @@ export default {
           size: blob.size,
           type: blob.type
         })
+        if (window.metadataArray){
+          customInitLayer();//初始化图层逻辑
+        }
+        svgEditor.layersPanel.updateContextPanel()
+        svgEditor.layersPanel.populateLayers()
       } catch (err) {
         if (err.name !== 'AbortError') {
           return console.error(err)
@@ -240,27 +249,29 @@ export default {
         svgCanvas.setSvgOption('apply', true)
 
         // no need for doctype, see https://jwatt.org/svg/authoring/#doctype-declaration
+        let svgContentStr = svgCanvas.svgCanvasToString()
+        if (window.metadataArray){
+          //还原metadata标签数据
+          const mySvgStr = svgCanvas.svgCanvasToString()
+          const enhancedSvgString = replaceSvgMetadata(mySvgStr, window.metadataArray);
 
-        //还原metadata标签数据
-        const mySvgStr = svgCanvas.svgCanvasToString()
-        const enhancedSvgString = replaceSvgMetadata(mySvgStr, window.metadataArray);
-
-        //将类名为qz-script还原成script标签
-        const svgDom = parseSVG(enhancedSvgString)
-        let elements = svgDom.getElementsByClassName("qz-script");
-        for (let i = 0; i < elements.length; i++) {
-          let newScript = document.createElement("script");
-          // 复制原有元素的所有属性
-          for (let j = 0; j < elements[i].attributes.length; j++) {
-            let attr = elements[i].attributes[j];
-            newScript.setAttribute(attr.name, attr.value);
+          //将类名为qz-script还原成script标签
+          const svgDom = parseSVG(enhancedSvgString)
+          let elements = svgDom.getElementsByClassName("qz-script");
+          for (let i = 0; i < elements.length; i++) {
+            let newScript = document.createElement("script");
+            // 复制原有元素的所有属性
+            for (let j = 0; j < elements[i].attributes.length; j++) {
+              let attr = elements[i].attributes[j];
+              newScript.setAttribute(attr.name, attr.value);
+            }
+            newScript.innerHTML = elements[i].innerHTML;
+            elements[i].parentNode.replaceChild(newScript, elements[i]);
           }
-          newScript.innerHTML = elements[i].innerHTML;
-          elements[i].parentNode.replaceChild(newScript, elements[i]);
+          //比对生成的svg元素的属性是否缺失
+          const resultSvgDom = compareAndFillSvgDom(window.initSvgDom, svgDom)
+          svgContentStr = serializeSVG(resultSvgDom)
         }
-        //比对生成的svg元素的属性是否缺失
-        const resultSvgDom = compareAndFillSvgDom(window.initSvgDom, svgDom)
-        const svgContentStr = serializeSVG(resultSvgDom)
         const svg = '<?xml version="1.0"?>\n' + svgContentStr
         const b64Data = svgCanvas.encode64(svg)
         const blob = b64toBlob(b64Data, 'image/svg+xml')

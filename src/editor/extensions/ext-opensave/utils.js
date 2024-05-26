@@ -93,11 +93,22 @@ function compareAndFillSvgDom(svgDom1, svgDom2) {
 
         return svgDom2;
 }
+
+// 默认新建图层，打开的文件不可编辑
+function customInitLayer(params) {
+        console.log(initSvgDom.querySelectorAll('.layer').length,'initSvgDom.querySelectorAll')
+        if(initSvgDom.querySelectorAll('.layer').length === 0){
+                svgEditor.svgCanvas.createLayer('图层 1')
+                svgEditor.layersPanel.updateContextPanel()
+                svgEditor.layersPanel.populateLayers()
+        }
+}
 export {
         replaceSvgMetadata,
         extractAndEnhanceMetadata,
         parseSVG,
         serializeSVG,
         addDomId,
-        compareAndFillSvgDom
+        compareAndFillSvgDom,
+        customInitLayer
 }

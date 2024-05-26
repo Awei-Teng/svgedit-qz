@@ -110,11 +110,11 @@ export const remapElement = (selected, changes, m) => {
   // we apply the changes directly to the DOM
   switch (elName) {
     case 'foreignObject':
-    case 'rect':{alert('foreignObject');}
+    case 'rect':
     case 'image': {
-    // Allow images to be inverted (give them matrix when flipped)
+      // Allow images to be inverted (give them matrix when flipped)
       if (elName === 'image' && (m.a < 0 || m.d < 0)) {
-      // Convert to matrix
+        // Convert to matrix
         const chlist = getTransformList(selected)
         const mt = svgCanvas.getSvgRoot().createSVGTransform()
         mt.setMatrix(matrixMultiply(transformListToTransform(chlist).matrix, m))
